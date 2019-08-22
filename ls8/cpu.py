@@ -45,6 +45,7 @@ class CPU:
     def __init__(self):
         """Construct a new CPU."""
         self.ram = [0b00000000] * 256
+        self.reg = [0b00000000] * 8
         self.pc = 0
         self.ir = 0
         self.fl = 0
@@ -60,44 +61,53 @@ class CPU:
         self.halted = False
 
         self.dispatch = {
-            'NOP': self.exec_nop,
+            # 'NOP': self.exec_nop,
             'HLT': self.exec_hlt,
-            'RET': self.exec_ret,
-            'IRET': self.exec_iret,
-            'PUSH': self.exec_push,
-            'POP': self.exec_pop,
+            # 'RET': self.exec_ret,
+            # 'IRET': self.exec_iret,
+            # 'PUSH': self.exec_push,
+            # 'POP': self.exec_pop,
             'PRN': self.exec_prn,
-            'PRA': self.exec_pra,
-            'CALL': self.exec_call,
-            'INT': self.exec_int,
-            'JMP': self.exec_jmp,
-            'JEQ': self.exec_jeq,
-            'JNE': self.exec_jne,
-            'JGT': self.exec_jgt,
-            'JLT': self.exec_jlt,
-            'JLE': self.exec_jle,
-            'JGE': self.exec_jge,
-            'INC': self.exec_inc,
-            'DEC': self.exec_dec,
-            'NOT': self.exec_not,
+            # 'PRA': self.exec_pra,
+            # 'CALL': self.exec_call,
+            # 'INT': self.exec_int,
+            # 'JMP': self.exec_jmp,
+            # 'JEQ': self.exec_jeq,
+            # 'JNE': self.exec_jne,
+            # 'JGT': self.exec_jgt,
+            # 'JLT': self.exec_jlt,
+            # 'JLE': self.exec_jle,
+            # 'JGE': self.exec_jge,
+            # 'INC': self.exec_inc,
+            # 'DEC': self.exec_dec,
+            # 'NOT': self.exec_not,
             'LDI': self.exec_ldi,
-            'LD': self.exec_ld,
-            'ST': self.exec_st,
-            'ADD': self.exec_add,
-            'SUB': self.exec_sub,
-            'MUL': self.exec_mul,
-            'DIV': self.exec_div,
-            'MOD': self.exec_mod,
-            'CMP': self.exec_cmp,
-            'AND': self.exec_and,
-            'OR': self.exec_or,
-            'XOR': self.exec_xor,
-            'SHL': self.exec_shl,
-            'SHR': self.exec_shr
+            # 'LD': self.exec_ld,
+            # 'ST': self.exec_st,
+            # 'ADD': self.exec_add,
+            # 'SUB': self.exec_sub,
+            # 'MUL': self.exec_mul,
+            # 'DIV': self.exec_div,
+            # 'MOD': self.exec_mod,
+            # 'CMP': self.exec_cmp,
+            # 'AND': self.exec_and,
+            # 'OR': self.exec_or,
+            # 'XOR': self.exec_xor,
+            # 'SHL': self.exec_shl,
+            # 'SHR': self.exec_shr
         }
 
-    def exec_hlt(self):
+    def exec_hlt(self, operand=None):
         self.halted = True
+
+    def exec_ldi(self, operand):
+        a = operand["operand_a"]
+        b = operand["operand_b"]
+        self.reg[a] = b
+
+    def exec_prn(self, operand):
+        a = operand["operand_a"]
+        print(self.reg[a])
 
     def load(self):
         """Load a program into memory."""
@@ -159,19 +169,21 @@ class CPU:
 
             if self.ram_read(self.ir) in self.instructions:
 
-                intstruction = self.ir
+                intstruction = self.ram_read(self.ir)
                 operands = {
                     "operand_a": 0,
                     "operand_b": 0
                 }
 
                 if num_operands > 0:
-                    value = self.pc = + 1
-                    operands["operand_a"] = self.ram_read(value)
+                    self.pc += 1
+                    value = self.ram_read(self.pc)
+                    operands["operand_a"] = value
 
                 if num_operands > 1:
-                    value = self.pc = + 1
-                    operands["operand_b"] = self.ram_read(value)
+                    self.pc += 1
+                    value = self.ram_read(self.pc)
+                    operands["operand_b"] = value
 
                 self.dispatch[self.instructions[intstruction]](operands)
 
