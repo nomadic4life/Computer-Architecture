@@ -96,6 +96,9 @@ class CPU:
             'SHR': self.exec_shr
         }
 
+    def exec_hlt(self):
+        self.halted = True
+
     def load(self):
         """Load a program into memory."""
 
@@ -148,7 +151,7 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        while True:
+        while not self.halted:
 
             self.ir = self.pc
             num_operands = (self.ram_read(self.ir) >> 6) & 0b11
