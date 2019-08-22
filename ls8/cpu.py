@@ -61,15 +61,15 @@ class CPU:
         self.dispatch = {
             # 'NOP': self.exec_nop,
             'HLT': self.exec_hlt,
-            # 'RET': self.exec_ret,
+            'RET': self.exec_ret,
             # 'IRET': self.exec_iret,
             'PUSH': self.exec_push,
             'POP': self.exec_pop,
             'PRN': self.exec_prn,
             # 'PRA': self.exec_pra,
-            # 'CALL': self.exec_call,
+            'CALL': self.exec_call,
             # 'INT': self.exec_int,
-            # 'JMP': self.exec_jmp,
+            'JMP': self.exec_jmp,
             # 'JEQ': self.exec_jeq,
             # 'JNE': self.exec_jne,
             # 'JGT': self.exec_jgt,
@@ -82,7 +82,7 @@ class CPU:
             'LDI': self.exec_ldi,
             # 'LD': self.exec_ld,
             # 'ST': self.exec_st,
-            # 'ADD': self.exec_add,
+            'ADD': self.exec_add,
             # 'SUB': self.exec_sub,
             'MUL': self.exec_mul,
             # 'DIV': self.exec_div,
@@ -117,10 +117,31 @@ class CPU:
         self.reg[self.sp] -= 1
         self.ram_write(self.reg[a], self.reg[self.sp])
 
-    def exec_pop(self, operand):
+    def exec_pop(self, operand=None):
         a = operand["operand_a"]
         self.reg[a] = self.ram_read(self.reg[self.sp])
         self.reg[self.sp] += 1
+
+    def exec_ret(self, operand=None):
+        address = {"operand_a": 0x04}
+        self.exec_pop(address)
+        self.pc = self.reg[0x04] + 1
+
+    def exec_call(self, operand):
+        a = operand["operand_a"]
+        address = {"operand_a": 0x04}
+        self.reg[0x04] = self.pc + 1
+        self.exec_push(address)
+        self.pc = self.reg[a]
+
+    def exec_jmp(self, operand):
+        a = operand["operand_a"]
+        self.pc = self.reg[a]
+
+    def exec_add(self, operand):
+        a = operand["operand_a"]
+        b = operand["operand_b"]
+        self.alu('ADD', a, b)
 
     # def load(self):
     #     """Load a program into memory."""
@@ -160,11 +181,39 @@ class CPU:
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
-        if op == "ADD":
+        if op == 'ADD':
             self.reg[reg_a] += self.reg[reg_b]
-        # elif op == "SUB": etc
+        elif op == 'SUB':
+            self.reg[reg_a] -= self.reg[reg_b]
         elif op == 'MUL':
             self.reg[reg_a] *= self.reg[reg_b]
+        elif op == 'DIV':
+            self.reg[reg_a] /= self.reg[reg_b]
+        elif op == 'MOD':
+            self.reg[reg_a] %= self.reg[reg_b]
+        elif op == 'NOT':
+            self.reg[reg_a] = not self.reg[reg_b]
+        elif op == 'AND':
+            self.reg[reg_a] &= self.reg[reg_b]
+        elif op == 'OR':
+            self.reg[reg_a] |= self.reg[reg_b]
+        elif op == 'XOR':
+            self.reg[reg_a] ^= self.reg[reg_b]
+        elif op == 'DEC':
+            self.reg[reg_a] -= 1
+        elif op == 'INC':
+            self.reg[reg_a] += 1
+        elif op == 'SHL':
+            self.reg[reg_a] <<= self.reg[reg_b]
+        elif op == 'SHR':
+            self.reg[reg_a] >>= self.reg[reg_b]
+        elif op == 'CMP':
+            if self.reg[reg_a] == self.reg[reg_b]:
+                self.fl = 1
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.fl = 2
+            else:
+                self.fl = 4
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -200,18 +249,18 @@ class CPU:
 
                 intstruction = self.ram_read(self.ir)
                 operands = {
-                    "operand_a": 0,
-                    "operand_b": 0
+                    "operand_a": None,
+                    "operand_b": None
                 }
 
                 if num_operands > 0:
-                    self.pc += 1
-                    value = self.ram_read(self.pc)
+
+                    value = self.ram_read(self.ir + 1)
                     operands["operand_a"] = value
 
                 if num_operands > 1:
-                    self.pc += 1
-                    value = self.ram_read(self.pc)
+
+                    value = self.ram_read(self.ir + 2)
                     operands["operand_b"] = value
 
                 self.dispatch[self.instructions[intstruction]](operands)
@@ -221,7 +270,7 @@ class CPU:
                 sys.exit()
 
             if set_pc == 0:
-                self.pc += 1
+                self.pc += num_operands + 1
 
     def ram_read(self, address):
         self.mar = address
