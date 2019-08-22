@@ -53,11 +53,9 @@ class CPU:
         self.mdr = 0
         self.isr = 0
         self.imr = 0
+        self.sp = 0x07
+        self.reg[self.sp] = 0xf4
 
-        self.operand_a = 0
-        self.operand_b = 0
-
-        self.sp = 0xf4
         self.halted = False
 
         self.dispatch = {
@@ -65,8 +63,8 @@ class CPU:
             'HLT': self.exec_hlt,
             # 'RET': self.exec_ret,
             # 'IRET': self.exec_iret,
-            # 'PUSH': self.exec_push,
-            # 'POP': self.exec_pop,
+            'PUSH': self.exec_push,
+            'POP': self.exec_pop,
             'PRN': self.exec_prn,
             # 'PRA': self.exec_pra,
             # 'CALL': self.exec_call,
@@ -113,6 +111,16 @@ class CPU:
         a = operand["operand_a"]
         b = operand["operand_b"]
         self.alu('MUL', a, b)
+
+    def exec_push(self, operand):
+        a = operand["operand_a"]
+        self.reg[self.sp] -= 1
+        self.ram_write(self.reg[a], self.reg[self.sp])
+
+    def exec_pop(self, operand):
+        a = operand["operand_a"]
+        self.reg[a] = self.ram_read(self.reg[self.sp])
+        self.reg[self.sp] += 1
 
     # def load(self):
     #     """Load a program into memory."""
